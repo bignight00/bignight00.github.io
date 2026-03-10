@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>책 표제지 보고 작가 이름 맞추기 게임</title>
+
+<style>
+body {
+    font-family: 'Arial Rounded MT Bold', Arial, sans-serif;
+    background: linear-gradient(to bottom, #ffeaa7, #fab1a0);
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 { color: #2d3436; }
+
+.quiz-box {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    max-width: 400px;
+    margin: 20px auto;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+img {
+    width: 250px;
+    border-radius: 15px;
+    margin-bottom: 15px;
+}
+
+button {
+    display: block;
+    width: 80%;
+    margin: 8px auto;
+    padding: 10px;
+    border-radius: 30px;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #74b9ff;
+    color: white;
+}
+
+button:hover {
+    background-color: #0984e3;
+}
+
+.timer {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #d63031;
+    font-weight: bold;
+}
+
+.result {
+    font-size: 18px;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+input {
+    padding: 10px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    width: 70%;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+#rankingList {
+    text-align: left;
+    margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🐱 책 표제지의 작가님은 누구? 🍠</h1>
+
+<div id="startScreen" class="quiz-box">
+    <h2>이름을 입력하세요</h2>
+    <input type="text" id="playerName" placeholder="이름 입력">
+    <button onclick="startGame()">게임 시작 🎮</button>
+</div>
+
+<div id="quiz" class="quiz-box" style="display:none;">
+    <div class="timer">⏰ 남은 시간: <span id="time">10</span>초</div>
+    <h2 id="questionTitle"></h2>
+    <img id="quizImage">
+    <div id="choices"></div>
+    <div id="result" class="result"></div>
+</div>
+
+<div id="final" class="quiz-box" style="display:none;">
+    <h2 id="finalText"></h2>
+    <h3>🏆 현재 랭킹 TOP 5</h3>
+    <div id="rankingList"></div>
+    <button onclick="restartGame()">다시하기 🔄</button>
+</div>
+
+<script>
+const quizzes = [
+    {
+        title: "문제 1",
+        image: "imag1.png",
+        choices: ["황선미", "송언", "류호선", "홍민정"],
+        answer: 4
+    },
+    {
+        title: "문제 2",
+        image: "imag2.png",
+        choices: ["김리리", "사이다", "백희나", "안녕달"],
+        answer: 2
+    },
+    {
+        title: "문제 3",
+        image: "imag3.png",
+        choices: ["송언", "류은실", "권정생", "류재향"],
+        answer: 3
+    },
+    {
+        title: "문제 4",
+        image: "imag4.png",
+        choices: ["정진호", "사이다", "이상희", "백희나"],
+        answer: 1
+     },
+     {
+        title: "문제 5",
+        image: "imag5.png",
+        choices: ["유은실", "심윤경", "김리리", "이승민"],
+        answer: 3
+      },
+     {
+        title: "문제 6",
+        image: "imag6.png",
+        choices: ["이승민", "함윤미", "김리리", "황선애"],
+        answer: 1
+      },
+     {
+        title: "문제 7",
+        image: "imag7.png",
+        choices: ["동지아", "강정인", "닭강정", "루리"],
+        answer: 1
+      },
+     {
+        title: "문제 8",
+        image: "imag8.png",
+        choices: ["이승민", "함윤미", "김리리", "강효미"],
+        answer: 4
+      },
+     {
+        title: "문제 9",
+        image: "imag9.png",
+        choices: ["송언", "황선미", "천효정", "권정생"],
+        answer: 2
+      },
+     {
+        title: "문제 10",
+        image: "imag10.png",
+        choices: ["최은옥", "이지은", "김동수", "백희나"],
+        answer: 4
+      },
+];
+
+let currentQuiz = 0;
+let score = 0;
+let timer;
+let timeLeft = 10;
+let playerName = "";
+
+function startGame() {
+    const nameInput = document.getElementById("playerName").value.trim();
+    if (nameInput === "") {
+        alert("이름을 입력해주세요!");
+        return;
+    }
+    playerName = nameInput;
+    document.getElementById("startScreen").style.display = "none";
+    document.getElementById("quiz").style.display = "block";
+    loadQuiz();
+}
+
+function loadQuiz() {
+    const quiz = quizzes[currentQuiz];
+    document.getElementById("questionTitle").innerText = quiz.title;
+    document.getElementById("quizImage").src = quiz.image;
+    document.getElementById("result").innerText = "";
+    document.getElementById("time").innerText = 10;
+
+    const choicesDiv = document.getElementById("choices");
+    choicesDiv.innerHTML = "";
+
+    quiz.choices.forEach((choice, index) => {
+        const btn = document.createElement("button");
+        btn.innerText = (index+1) + ". " + choice;
+        btn.onclick = () => checkAnswer(index);
+        choicesDiv.appendChild(btn);
+    });
+
+    startTimer();
+}
+
+function startTimer() {
+    timeLeft = 10;
+    timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById("time").innerText = timeLeft;
+
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            showResult(false, true);
+        }
+    }, 1000);
+}
+
+function checkAnswer(selected) {
+    clearInterval(timer);
+    const correct = quizzes[currentQuiz].answer;
+    if (selected === correct) {
+        score++;
+        showResult(true, false);
+    } else {
+        showResult(false, false);
+    }
+}
+
+function showResult(isCorrect, isTimeout) {
+    const resultDiv = document.getElementById("result");
+
+    if (isTimeout) {
+        resultDiv.innerText = "⏰ 시간이 끝났어요!";
+        resultDiv.style.color = "orange";
+    } else if (isCorrect) {
+        resultDiv.innerText = "🎉 정답이에요!";
+        resultDiv.style.color = "green";
+    } else {
+        resultDiv.innerText = "❌ 아쉬워요!";
+        resultDiv.style.color = "red";
+    }
+
+    setTimeout(() => {
+        currentQuiz++;
+        if (currentQuiz < quizzes.length) {
+            loadQuiz();
+        } else {
+            endGame();
+        }
+    }, 1500);
+}
+
+function endGame() {
+    document.getElementById("quiz").style.display = "none";
+    document.getElementById("final").style.display = "block";
+
+    document.getElementById("finalText").innerText =
+        playerName + "님의 점수: " + score + " / " + quizzes.length;
+
+    saveRanking(playerName, score);
+    displayRanking();
+}
+
+function saveRanking(name, newScore) {
+    let rankings = JSON.parse(localStorage.getItem("quizRankings")) || [];
+    rankings.push({ name: name, score: newScore });
+
+    rankings.sort((a, b) => b.score - a.score);
+    rankings = rankings.slice(0, 5);
+
+    localStorage.setItem("quizRankings", JSON.stringify(rankings));
+}
+
+function displayRanking() {
+    let rankings = JSON.parse(localStorage.getItem("quizRankings")) || [];
+    const rankingDiv = document.getElementById("rankingList");
+    rankingDiv.innerHTML = "";
+
+    rankings.forEach((entry, index) => {
+        rankingDiv.innerHTML +=
+            (index + 1) + "위 🏅 " + entry.name + " - " + entry.score + "점<br>";
+    });
+}
+
+function restartGame() {
+    currentQuiz = 0;
+    score = 0;
+    document.getElementById("final").style.display = "none";
+    document.getElementById("startScreen").style.display = "block";
+    document.getElementById("playerName").value = "";
+}
+</script>
+
+</body>
+</html>
